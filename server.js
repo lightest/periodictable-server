@@ -2,6 +2,44 @@ import http from "http";
 import ollama from "ollama";
 
 const port = 3000;
+const MODEL = "gemma2";
+
+const API_POST_HANDLERS = {
+    "/api/chat": async (parsedBody, req, res) =>
+    {
+        const { messages, model = "llama3.1" } = JSON.parse(body);
+
+        const response = await ollama.chat({
+            model: model,
+            messages: messages
+        });
+
+        return response;
+    },
+
+    "/api/bondElements": async (parsedBody, req, res) =>
+    {
+        console.log(parsedBody);
+
+        const llmMessage =
+            `Can these atoms of chemical elements given by JSON form a bond? Return resulting chemical element in the same format. Do not add atoms. No coding just object as string. ${JSON.stringify(parsedBody.el1)}, ${JSON.stringify(parsedBody.el2)}`;
+        console.log(llmMessage);
+
+        const response = await ollama.generate({
+            model: MODEL,
+            prompt: llmMessage
+            // messages: [
+            //     {
+            //         role: "user",
+            //         content: llmMessage
+            //     }
+            // ]
+        });
+
+        console.log(response);
+        return response;
+    }
+};
 
 const server = http.createServer(async (req, res) =>
 {
@@ -18,8 +56,11 @@ const server = http.createServer(async (req, res) =>
         return;
     }
 
-    if (req.method === "POST" && req.url === "/api/chat")
+    console.log(req.url, req.method);
+
+    if (req.method === "POST" && API_POST_HANDLERS[req.url])
     {
+        console.log("Handling post request");
         let body = "";
 
         req.on("data", chunk =>
@@ -31,15 +72,15 @@ const server = http.createServer(async (req, res) =>
         {
             try
             {
-                const { messages, model = "llama3.1" } = JSON.parse(body);
-
-                const response = await ollama.chat({
-                    model: model,
-                    messages: messages
-                });
+                const parsedBody = JSON.parse(body);
+                const response = await API_POST_HANDLERS[ req.url ](parsedBody, req, res);
 
                 res.writeHead(200, { "Content-Type": "application/json" });
-                res.end(JSON.stringify({ response: response.message }));
+                if (response.response && typeof response.response === "string")
+                {
+                    res.end(JSON.stringify({ response: response.message }));
+                }
+                // res.end(JSON.stringify({ response: response.message }));
             }
             catch (error)
             {
