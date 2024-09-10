@@ -6,6 +6,15 @@ const MODEL = "gemma2"; // Bset so far.
 // const MODEL = "mistral-nemo";
 
 const PROMPTS = {
+    chemicalBalanceEquation: (equation) => {
+        return `Solve chemical ballance equation such that it's accurate acoording to the laws of chemistry: ${equation}. Output solution directly.`;
+    },
+
+    describeElement: (elementName) =>
+    {
+        return `Give me short, professional, on point description of chemical element: ${elementName} as if from wikipedia page preview. Use plain text.`;
+    },
+
     bondChemicals: "Conduct chemical reaction using given chemicals and atoms. Return resulting chemical with formula, name and amount of atoms for each element. Use only given atoms. Use format {formula: 'formula', name: 'name_of_chemical', elements: [{symbol, name, atoms}]}. If there are more than one chemical as a result of the chemical reaction, return all of them in the array. Return response directly, do not use markdown. Elements:"
 };
 
@@ -18,6 +27,41 @@ const API_POST_HANDLERS = {
             model: model,
             messages: messages
         });
+
+        return response;
+    },
+
+    "/api/describeElement": async (parsedBody, req, res) =>
+    {
+        console.log(parsedBody);
+
+        const llmMessage = PROMPTS.describeElement(parsedBody.element.name);
+        console.log(llmMessage);
+
+        const response = await ollama.generate({
+            model: MODEL,
+            prompt: llmMessage
+        })
+
+        console.log(response);
+
+        return response;
+    },
+
+
+    "/api/solveChemicalBalanceEquation": async (parsedBody, req, res) =>
+    {
+        console.log(parsedBody);
+
+        const llmMessage = PROMPTS.chemicalBalanceEquation(parsedBody.equation);
+        console.log(llmMessage);
+
+        const response = await ollama.generate({
+            model: MODEL,
+            prompt: llmMessage
+        })
+
+        console.log(response);
 
         return response;
     },
