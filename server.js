@@ -6,8 +6,14 @@ const MODEL = "gemma2"; // Bset so far.
 // const MODEL = "mistral-nemo";
 
 const PROMPTS = {
-    chemicalBalanceEquation: (equation) => {
-        return `Solve chemical ballance equation such that it's accurate acoording to the laws of chemistry: ${equation}. Output solution directly.`;
+    chemicalBalanceEquation: (equation) =>
+    {
+        return `Solve chemical ballance equation such that it's accurate acoording to the laws of chemistry: ${equation}. It has to be correct, no room for mistakes. Output solution directly.`;
+    },
+
+    completeBalanceEquation: (incompleteEquation) =>
+    {
+        return `Finish this chemical balance equation: ${incompleteEquation}. It has to be correct, no room for mistakes. Output solution directly.`;
     },
 
     describeElement: (elementName) =>
@@ -54,6 +60,23 @@ const API_POST_HANDLERS = {
         console.log(parsedBody);
 
         const llmMessage = PROMPTS.chemicalBalanceEquation(parsedBody.equation);
+        console.log(llmMessage);
+
+        const response = await ollama.generate({
+            model: MODEL,
+            prompt: llmMessage
+        })
+
+        console.log(response);
+
+        return response;
+    },
+
+    "/api/completeBalanceEquation": async (parsedBody, req, res) =>
+    {
+        console.log(parsedBody);
+
+        const llmMessage = PROMPTS.completeBalanceEquation(parsedBody.incompleteEquation);
         console.log(llmMessage);
 
         const response = await ollama.generate({
